@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Source {
+  manual
+  geofence
+  auto
+}
+
+enum Type {
+  ENTER
+  EXIT
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  locations      Location[]
+  workSessions   WorkSession[]
+  geofenceEvents GeofenceEvent[]
+  dailySummaries DailySummary[]
+  monthlyReports MonthlyReport[]
+}
+
+model Location {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  latitude  Float
+  longitude Float
+  radius    Int // în metri
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workSessions  WorkSession[]
+  geofenceEvent GeofenceEvent[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@index([latitude, longitude])
+}
+
+model WorkSession {
+  id           String    @id @default(cuid())
+  userId       String
+  locationId   String?
+  startTime    DateTime
+  endTime      DateTime?
+  totalMinutes Int?
+  source       Source    @default(manual)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([locationId])
+  @@index([startTime])
+}
+
+model GeofenceEvent {
+  id         String   @id @default(cuid())
+  userId     String
+  locationId String
+  type       Type
+  latitude   Float
+  longitude  Float
+  timestamp  DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([locationId])
+  @@index([timestamp])
+}
+
+model DailySummary {
+  id                String   @id @default(cuid())
+  userId            String
+  date              DateTime @map("date") // va stoca doar ziua (YYYY-MM-DD)
+  workedMinutes     Int      @default(0)
+  idealMinutes      Int      @default(480) // 8 ore * 60 minute
+  differenceMinutes Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+model MonthlyReport {
+  id           String   @id @default(cuid())
+  userId       String
+  month        Int // 1-12
+  year         Int
+  totalMinutes Int      @default(0)
+  filePath     String // calea către fișierul PDF/CSV generat
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month, year])
+  @@index([userId])
+  @@index([year, month])
+}

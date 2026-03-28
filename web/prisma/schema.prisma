@@ -24,11 +24,12 @@ enum Type {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  username  String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  email          String   @unique
+  username       String   @unique
+  hashedPassword String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   locations      Location[]
   workSessions   WorkSession[]
@@ -93,12 +94,11 @@ model GeofenceEvent {
 }
 
 model DailySummary {
-  id                String   @id @default(cuid())
-  userId            String
-  date              DateTime @map("date") // va stoca doar ziua (YYYY-MM-DD)
-  workedMinutes     Int      @default(0)
-  idealMinutes      Int      @default(480) // 8 ore * 60 minute
-  differenceMinutes Int
+  id            String   @id @default(cuid())
+  userId        String
+  date          DateTime @map("date") // va stoca doar ziua (YYYY-MM-DD)
+  workedMinutes Int      @default(0)
+  idealMinutes  Int      @default(480) // 8 ore * 60 minute
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

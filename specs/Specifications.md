@@ -20,6 +20,7 @@ User
 - id
 - email
 - username
+- hashedPassword
 - createdAt
 - updatedAt
 
@@ -70,7 +71,6 @@ DailySummary
 - date
 - workedMinutes
 - idealMinutes
-- differenceMinutes
 
 MonthlyReport
 - id
